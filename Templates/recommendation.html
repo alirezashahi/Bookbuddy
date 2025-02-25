@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/recom.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+<main>
+    <section class="recommendation-section">
+        <div class="container py-5">
+            <div class="text-center mb-5">
+                <h2 class="display-4 fw-bold text-primary">Your Personalized Recommendations</h2>
+                <p class="lead text-muted">Discover books tailored just for you</p>
+            </div>
+
+            {% if show_results %}
+                <div class="book-carousel-container">
+                    <button class="carousel-arrow prev" onclick="prevBook()">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    
+                    <div class="book-content">
+                        {% for rec in recommendations %}
+                            <div class="book-slide" 
+                                 data-index="{{ loop.index0 }}" 
+                                 data-book-id="{{ rec['book']['id'] }}"
+                                 {% if not loop.first %}style="display: none;"{% endif %}>
+                                <div class="book-image-container mb-4">
+                                    <img src="https://books.google.com/books/content?id={{ rec['book']['id'] }}&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+                                         alt="{{ rec['book']['title'] }}"
+                                         class="book-image">
+                                </div>
+
+                                <div class="book-title text-center mb-4">
+                                    <h3 class="display-5">{{ rec['book']['title'] }}</h3>
+                                    <p class="lead">by {{ rec['book']['authors']|join(', ') }}</p>
+                                </div>
+                                
+                                <div class="quick-stats">
+                                    <div class="stat-item">
+                                        <i class="fas fa-star text-warning"></i>
+                                        <span>{{ "%.1f"|format(rec['similarity'] * 100) }}% Match</span>
+                                    </div>
+                                    {% if rec['book']['categories'] %}
+                                    <div class="stat-item">
+                                        <i class="fas fa-book"></i>
+                                        <span>{{ rec['book']['categories']|join(', ') }}</span>
+                                    </div>
+                                    {% endif %}
+                                    <div class="stat-item">
+                                        <i class="fas fa-language"></i>
+                                        <span>{{ rec['book']['language']|upper }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="book-summary mt-4">
+                                    <h4>Summary</h4>
+                                    <p class="summary-preview">{{ rec['book']['description'][:200] }}...</p>
+                                    <div class="full-summary hidden">
+                                        <p>{{ rec['book']['description'] }}</p>
+                                    </div>
+                                    <button class="btn btn-link" onclick="toggleSummary({{ loop.index0 }})">
+                                        <span class="read-more-text">Read More</span>
+                                        <i class="fas fa-chevron-down summary-icon"></i>
+                                    </button>
+                                </div>
+
+                                <div class="action-buttons mt-4">
+                                    {% if current_user.is_authenticated %}
+                                        <button class="btn btn-outline-primary reading-list-btn" 
+                                                onclick="addToReadingList('{{ rec['book']['id'] }}', 'current')"
+                                                data-status="current">
+                                            <i class="fas fa-book-reader"></i> Currently Reading
+                                        </button>
+                                        <button class="btn btn-outline-primary reading-list-btn"
+                                                onclick="addToReadingList('{{ rec['book']['id'] }}', 'want')"
+                                                data-status="want">
+                                            <i class="fas fa-bookmark"></i> Want to Read
+                                        </button>
+                                        <button class="btn btn-outline-primary reading-list-btn"
+                                                onclick="addToReadingList('{{ rec['book']['id'] }}', 'finished')"
+                                                data-status="finished">
+                                            <i class="fas fa-check-circle"></i> Finished Reading
+                                        </button>
+                                    {% else %}
+                                        <a href="{{ url_for('login') }}" class="btn btn-primary">
+                                            <i class="fas fa-sign-in-alt"></i> Login to Add to Reading List
+                                        </a>
+                                    {% endif %}
+                                    <button class="btn btn-outline-primary" onclick="viewBookDetails('{{ rec['book']['id'] }}')">
+                                        <i class="fas fa-info-circle"></i> More Details
+                                    </button>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <button class="carousel-arrow next" onclick="nextBook()">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            {% else %}
+                <div class="text-center">
+                    <p>Please complete the <a href="{{ url_for('form') }}">recommendation form</a> to get personalized book suggestions.</p>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="{{ url_for('static', filename='js/recommendation.js') }}"></script>
+{% endblock %}
